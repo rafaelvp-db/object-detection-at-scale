@@ -20,17 +20,14 @@
 
 # COMMAND ----------
 
+from pyspark.sql import functions as F
+
+spark.sql("DROP DATABASE IF EXISTS openimage CASCADE")
 spark.sql("CREATE DATABASE IF NOT EXISTS openimage")
-spark.read.csv("dbfs:/tmp/oidv6-train-annotations-bbox.csv", header = True).write.saveAsTable("openimage.train_annotation")
-spark.read.csv("dbfs:/tmp/validation-annotations-bbox.csv", header = True).write.saveAsTable("openimage.validation_annotation")
-spark.read.csv("dbfs:/tmp/test-annotations-bbox.csv", header = True).write.saveAsTable("openimage.test_annotation")
+spark.read.csv("dbfs:/tmp/oidv6-train-annotations-bbox.csv", header = True).withColumn("split", F.lit("train")).write.saveAsTable("openimage.train_annotation", mode = "overwrite")
+spark.read.csv("dbfs:/tmp/validation-annotations-bbox.csv", header = True).withColumn("split", F.lit("validation")).write.saveAsTable("openimage.validation_annotation", mode = "overwrite")
+spark.read.csv("dbfs:/tmp/test-annotations-bbox.csv", header = True).withColumn("split", F.lit("test")).write.saveAsTable("openimage.test_annotation", mode = "overwrite")
 spark.read.csv("dbfs:/tmp/class-descriptions-boxable.csv", schema = "class string, name string").write.saveAsTable("openimage.class")
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC 
-# MAGIC select * from openimage.class
 
 # COMMAND ----------
 
@@ -54,7 +51,7 @@ spark.read.csv("dbfs:/tmp/train-images-boxable-with-rotation.csv", header = True
 
 # MAGIC %sql
 # MAGIC 
-# MAGIC select distinct a.ImageID, i.OriginalURL
+# MAGIC select distinct a.ImageID, i.OriginalURL, i.Subset
 # MAGIC from (
 # MAGIC   select ImageID, LabelName from
 # MAGIC   (
@@ -66,9 +63,9 @@ spark.read.csv("dbfs:/tmp/train-images-boxable-with-rotation.csv", header = True
 # MAGIC inner join openimage.class as c
 # MAGIC on a.LabelName = c.class
 # MAGIC inner join (
-# MAGIC   select distinct ImageID, OriginalURL from openimage.train_image
-# MAGIC   union distinct select ImageID, OriginalURL from openimage.test_image
-# MAGIC   union distinct select ImageID, OriginalURL from openimage.validation_image
+# MAGIC   select distinct ImageID, OriginalURL, Subset from openimage.train_image
+# MAGIC   union distinct select ImageID, OriginalURL, Subset from openimage.test_image
+# MAGIC   union distinct select ImageID, OriginalURL, Subset from openimage.validation_image
 # MAGIC ) as i
 # MAGIC on a.ImageID = i.ImageID
 # MAGIC where c.name = "Car"
@@ -79,10 +76,33 @@ _sqldf.write.saveAsTable("openimage.training_image_url")
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC 
-# MAGIC select * from openimage.training_image_url
+df_images = _sqldf.toPandas()
 
 # COMMAND ----------
 
+# DBTITLE 1,Dowloading Images
+!pip install wget
 
+import sys
+sys.stdout.fileno = lambda: 0
+
+import wget
+from pathlib import Path
+import time
+from urllib.error import HTTPError
+
+result = {}
+
+for _, row in df_images.iterrows():
+  
+  subset = row["Subset"]
+  folder_path = f"/dbfs/open_image/{subset}"
+  file_name = f"{row['OriginalURL'].split('/')[-1]}"
+  Path(folder_path).mkdir(exist_ok = True, parents = True)
+  print(f"Downloading {row['OriginalURL']} into {file_name}...")
+  try:
+    wget.download(row["OriginalURL"], out = f"{folder_path}/{file_name}")
+    result[row['OriginalURL']] = True
+  except HTTPError as e:
+    result[row['OriginalURL']] = False
+    print(f"Error downloading {row['OriginalURL']}: {str(e)}")
