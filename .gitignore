@@ -1,0 +1,6 @@
+.venv
+.whl
+.egg
+__pycache__
+runs
+*.pt

@@ -1,0 +1,10 @@
+torch
+torchvision
+opencv-python
+pandas
+requests
+pillow
+pyaml
+tqdm
+matplotlib
+seaborn
