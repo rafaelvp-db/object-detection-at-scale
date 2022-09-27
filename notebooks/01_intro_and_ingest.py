@@ -28,19 +28,60 @@ spark.read.csv("dbfs:/tmp/class-descriptions-boxable.csv", schema = "class strin
 
 # COMMAND ----------
 
+# MAGIC %sql
+# MAGIC 
+# MAGIC select * from openimage.class
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC select * from openimage.train_annotation
+
+# COMMAND ----------
+
 spark.read.csv("dbfs:/tmp/test-images-with-rotation.csv", header = True).write.saveAsTable("openimage.test_image")
 spark.read.csv("dbfs:/tmp/validation-images-with-rotation.csv", header = True).write.saveAsTable("openimage.validation_image")
 spark.read.csv("dbfs:/tmp/train-images-boxable-with-rotation.csv", header = True).write.saveAsTable("openimage.train_image")
 
 # COMMAND ----------
 
-#TODO: filter the Image IDS which belong to the Car Class and get the corresponding Image URLs
+# MAGIC %sql
+# MAGIC 
+# MAGIC select * from openimage.train_image
 
 # COMMAND ----------
 
 # MAGIC %sql
 # MAGIC 
-# MAGIC select * from openimage.train_image
+# MAGIC select distinct a.ImageID, i.OriginalURL
+# MAGIC from (
+# MAGIC   select ImageID, LabelName from
+# MAGIC   (
+# MAGIC     select distinct ImageId, LabelName from openimage.train_annotation as train
+# MAGIC     union distinct select distinct ImageID, LabelName from openimage.validation_annotation as val
+# MAGIC     union distinct select distinct ImageID, LabelName from openimage.test_annotation as test
+# MAGIC   )
+# MAGIC ) as a
+# MAGIC inner join openimage.class as c
+# MAGIC on a.LabelName = c.class
+# MAGIC inner join (
+# MAGIC   select distinct ImageID, OriginalURL from openimage.train_image
+# MAGIC   union distinct select ImageID, OriginalURL from openimage.test_image
+# MAGIC   union distinct select ImageID, OriginalURL from openimage.validation_image
+# MAGIC ) as i
+# MAGIC on a.ImageID = i.ImageID
+# MAGIC where c.name = "Car"
+
+# COMMAND ----------
+
+_sqldf.write.saveAsTable("openimage.training_image_url")
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC select * from openimage.training_image_url
 
 # COMMAND ----------
 
