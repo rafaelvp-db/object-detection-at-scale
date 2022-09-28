@@ -63,11 +63,11 @@ dbutils.fs.ls("/tmp/open_image/train")[0]
 
 # COMMAND ----------
 
-dbutils.fs.ls("/FileStore/yolo_car")
+dbutils.fs.ls("/tmp/open_image/train/")[100]
 
 # COMMAND ----------
 
-img_path = "/dbfs/FileStore/yolo_car/0000048549557964_18233009494_029b52ca79_o.jpg"
+img_path = "/dbfs/tmp/open_image/train/001156eb13f37194_6409333165_ecceed029b_o.jpg"
 
 img = Image.open(img_path)
 im = np.asarray(img)
