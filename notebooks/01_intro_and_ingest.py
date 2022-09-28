@@ -1,9 +1,5 @@
 # Databricks notebook source
-!pip install --upgrade pip && pip install wget
-
-# COMMAND ----------
-
-# Download some metadata files
+# Download some metadata/annotation files
 !wget https://storage.googleapis.com/openimages/v5/class-descriptions-boxable.csv -O /dbfs/tmp/class-descriptions-boxable.csv
 !wget -O /dbfs/tmp/oid_bbox_trainable_label_map.pbtxt https://raw.githubusercontent.com/tensorflow/models/master/research/object_detection/data/oid_bbox_trainable_label_map.pbtxt
 !wget https://storage.googleapis.com/openimages/v5/test-annotations-bbox.csv -O /dbfs/tmp/test-annotations-bbox.csv
@@ -76,33 +72,69 @@ _sqldf.write.saveAsTable("openimage.training_image_url")
 
 # COMMAND ----------
 
-df_images = _sqldf.toPandas()
+# MAGIC %sql
+# MAGIC 
+# MAGIC select * from openimage.training_image_url
 
 # COMMAND ----------
 
 # DBTITLE 1,Dowloading Images
-!pip install wget
-
-import sys
-sys.stdout.fileno = lambda: 0
-
-import wget
-from pathlib import Path
 import time
-from urllib.error import HTTPError
+from pyspark.sql.functions import udf, col
+import pyspark
 
-result = {}
+spark.conf.set("spark.databricks.optimizer.adaptive.enabled", "true")
+spark.conf.set("spark.default.parallelism", "240")
+spark.conf.set("spark.sql.autoBroadcastJoinThreshold", "100485760")
 
-for _, row in df_images.iterrows():
+def download_image(subset, url, image_id):
   
-  subset = row["Subset"]
-  folder_path = f"/dbfs/open_image/{subset}"
-  file_name = f"{row['OriginalURL'].split('/')[-1]}"
-  Path(folder_path).mkdir(exist_ok = True, parents = True)
-  print(f"Downloading {row['OriginalURL']} into {file_name}...")
+  import wget
+  import sys
+  sys.stdout.fileno = lambda: 0 #workaround for wget
+  from pathlib import Path
+  from urllib.error import HTTPError
+
+  folder_path = f"/dbfs/tmp/open_image/{subset}"
+  file_name = f"{image_id}_{url.split('/')[-1]}"
   try:
-    wget.download(row["OriginalURL"], out = f"{folder_path}/{file_name}")
-    result[row['OriginalURL']] = True
+    if not Path(f"{folder_path}/{file_name}").exists():
+      wget.download(
+        url,
+        out = f"{folder_path}/{file_name}"
+      )
+    return "ok"
   except HTTPError as e:
-    result[row['OriginalURL']] = False
-    print(f"Error downloading {row['OriginalURL']}: {str(e)}")
+    return "nok"
+
+udf_download_images = udf(download_image)
+
+result_df = _sqldf
+result_df = result_df.repartition(spark.sparkContext.defaultParallelism).cache()
+result_df.count()
+
+result_df = result_df \
+  .withColumn(
+    "result",
+    udf_download_images(col("Subset"), col("OriginalURL"), col("ImageID"))
+  ).write\
+  .saveAsTable(
+    "openimage.image_download",
+    mode = "overwrite"
+  )
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC select * from openimage.image_download
+
+# COMMAND ----------
+
+#TODO: remove this cell
+
+result_df.write.saveAsTable("openimage.image_download", mode = "overwrite")
+
+# COMMAND ----------
+
+
