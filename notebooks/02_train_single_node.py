@@ -34,3 +34,45 @@ results.save(save_dir = "/dbfs/FileStore/yolo")
 img = Image.open("/dbfs/FileStore/yolo/zidane.jpg")
 im = np.asarray(img)
 plt.imshow(im)
+
+# COMMAND ----------
+
+dbutils.fs.ls("/tmp/open_image/train")[0]
+
+# COMMAND ----------
+
+# DBTITLE 1,Testing with Car Images
+# MAGIC %cd /dbfs/tmp
+# MAGIC 
+# MAGIC from PIL import Image
+# MAGIC import numpy as np
+# MAGIC import matplotlib.pyplot as plt
+# MAGIC import torch
+# MAGIC 
+# MAGIC 
+# MAGIC model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
+# MAGIC 
+# MAGIC # Images
+# MAGIC imgs = ["/dbfs/tmp/open_image/train/0000048549557964_18233009494_029b52ca79_o.jpg"]
+# MAGIC 
+# MAGIC # Inference
+# MAGIC results = model(imgs)
+# MAGIC 
+# MAGIC # Display
+# MAGIC results.save(save_dir = "/dbfs/FileStore/yolo_car")
+
+# COMMAND ----------
+
+dbutils.fs.ls("/FileStore/yolo_car")
+
+# COMMAND ----------
+
+img_path = "/dbfs/FileStore/yolo_car/0000048549557964_18233009494_029b52ca79_o.jpg"
+
+img = Image.open(img_path)
+im = np.asarray(img)
+plt.imshow(im)
+
+# COMMAND ----------
+
+
