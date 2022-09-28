@@ -127,13 +127,8 @@ result_df = result_df \
 
 # MAGIC %sql
 # MAGIC 
-# MAGIC select * from openimage.image_download
-
-# COMMAND ----------
-
-#TODO: remove this cell
-
-result_df.write.saveAsTable("openimage.image_download", mode = "overwrite")
+# MAGIC select count(1) from openimage.image_download
+# MAGIC where result = 'ok'
 
 # COMMAND ----------
 
