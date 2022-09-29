@@ -73,23 +73,24 @@ results.save(save_dir = detection_path)
 # MAGIC 
 # MAGIC import glob
 # MAGIC 
-# MAGIC fig, ax = plt.subplots(20)
-# MAGIC plt.figure(figsize=(50, 100), dpi=80)
-# MAGIC 
 # MAGIC # Display
 # MAGIC 
+# MAGIC fig, ax = plt.subplots(20)
+# MAGIC plt.figure(figsize=(50, 100), dpi=80)
 # MAGIC fig = plt.figure(figsize=(20, 100))
 # MAGIC columns = 3
-# MAGIC rows = 20
+# MAGIC rows = 7
 # MAGIC 
 # MAGIC output_path = "/dbfs/yolo/detections4"
 # MAGIC img_path = glob.glob(f"{output_path}/*.jpg")
 # MAGIC 
 # MAGIC for i in range(1, columns * rows + 1):
-# MAGIC     img = Image.open(img_path[min(i-1, 20)])
-# MAGIC     im = np.asarray(img)
-# MAGIC     fig.add_subplot(rows, columns, i)
-# MAGIC     plt.imshow(im)
+# MAGIC   if i > len(img_path):
+# MAGIC     break
+# MAGIC   img = Image.open(img_path[i-1])
+# MAGIC   im = np.asarray(img)
+# MAGIC   fig.add_subplot(rows, columns, i)
+# MAGIC   plt.imshow(im)
 
 # COMMAND ----------
 
