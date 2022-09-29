@@ -5,13 +5,10 @@ logging.getLogger("py4j.java_gateway").setLevel(logging.ERROR)
 
 # COMMAND ----------
 
-! ls "/dbfs/tmp/open_image/validation" | wc -l
-
-# COMMAND ----------
-
 # MAGIC %sql
 # MAGIC 
-# MAGIC select count(1), Subset, result from openimage.image_download
+# MAGIC select count(1), Subset, result 
+# MAGIC from openimage.image_download
 # MAGIC group by result, Subset
 # MAGIC order by Subset, result
 
@@ -39,14 +36,15 @@ logging.getLogger("py4j.java_gateway").setLevel(logging.ERROR)
 
 # COMMAND ----------
 
+# DBTITLE 1,Create a folder to store our predictions results
 from pathlib import Path
 
 detection_path = "/dbfs/yolo/detections"
 Path(detection_path).mkdir(exist_ok = True, parents = True)
-results.save(save_dir = detection_path)
 
 # COMMAND ----------
 
+# DBTITLE 1,Run inference
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
@@ -55,17 +53,21 @@ import glob
 
 model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
 
-# Images
-imgs = [
-  f"/{file.path}".replace(":", "/") 
-  for file in dbutils.fs.ls("/tmp/open_image/test")[:20]
+# Let's take a first batch of 20 images to run predictions on
+img_list = [
+  f"/{file.path.replace(':', '')}"
+  for file
+  in dbutils.fs.ls("/tmp/open_image/test")
 ]
 
 # Inference
-results = model(imgs)
+index = np.random.randint(low = 0, high = len(img_list))
+results = model(img_list[index : index + 20])
+results.save(save_dir = detection_path)
 
 # COMMAND ----------
 
+# DBTITLE 1,Displaying the Results
 # MAGIC %matplotlib inline
 # MAGIC 
 # MAGIC import glob
@@ -79,12 +81,15 @@ results = model(imgs)
 # MAGIC columns = 1
 # MAGIC rows = 20
 # MAGIC 
-# MAGIC output_path = "/dbfs/yolo/detection3"
+# MAGIC output_path = "/dbfs/yolo/detections4"
 # MAGIC img_path = glob.glob(f"{output_path}/*.jpg")
-# MAGIC results.save(save_dir = output_path)
 # MAGIC 
 # MAGIC for i in range(1, columns*rows+1):
 # MAGIC     img = Image.open(img_path[i-1])
 # MAGIC     im = np.asarray(img)
 # MAGIC     fig.add_subplot(rows, columns, i)
 # MAGIC     plt.imshow(im)
+
+# COMMAND ----------
+
+
