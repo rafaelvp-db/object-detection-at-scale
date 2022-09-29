@@ -2,6 +2,7 @@
 import logging
 logger = spark._jvm.org.apache.log4j
 logging.getLogger("py4j.java_gateway").setLevel(logging.ERROR)
+logging.getLogger("py4j").setLevel(logging.ERROR)
 
 # COMMAND ----------
 
@@ -78,18 +79,19 @@ results.save(save_dir = detection_path)
 # MAGIC # Display
 # MAGIC 
 # MAGIC fig = plt.figure(figsize=(20, 100))
-# MAGIC columns = 1
+# MAGIC columns = 3
 # MAGIC rows = 20
 # MAGIC 
 # MAGIC output_path = "/dbfs/yolo/detections4"
 # MAGIC img_path = glob.glob(f"{output_path}/*.jpg")
 # MAGIC 
-# MAGIC for i in range(1, columns*rows+1):
-# MAGIC     img = Image.open(img_path[i-1])
+# MAGIC for i in range(1, columns * rows + 1):
+# MAGIC     img = Image.open(img_path[min(i-1, 20)])
 # MAGIC     im = np.asarray(img)
 # MAGIC     fig.add_subplot(rows, columns, i)
 # MAGIC     plt.imshow(im)
 
 # COMMAND ----------
 
+# DBTITLE 1,TODO: Single-Node Fine Tuning
 
