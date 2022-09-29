@@ -5,9 +5,27 @@ logging.getLogger("py4j.java_gateway").setLevel(logging.ERROR)
 
 # COMMAND ----------
 
-print(f"Training images: {len(dbutils.fs.ls('dbfs:/tmp/open_image/train'))}")
-print(f"Testing images: {len(dbutils.fs.ls('dbfs:/tmp/open_image/test'))}")
-print(f"Validation images: {len(dbutils.fs.ls('dbfs:/tmp/open_image/validation'))}")
+! ls "/dbfs/tmp/open_image/validation" | wc -l
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC select count(1), Subset, result from openimage.image_download
+# MAGIC group by result, Subset
+# MAGIC order by Subset, result
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ## YOLO: You Only Look Once
+# MAGIC 
+# MAGIC <hr></hr>
+# MAGIC 
+# MAGIC * **YOLO** is short for You Only Look Once. It is a family of single-stage deep learning based object detectors. They are capable of more than real-time object detection with state-of-the-art accuracy.
+# MAGIC * We will start off by downloading our requirements for YOLO's PyTorch version
+# MAGIC * Next, we will download a pre-trained version of **YOLOv5** and check how well it does on some of the images from our dataset.
 
 # COMMAND ----------
 
@@ -16,63 +34,57 @@ print(f"Validation images: {len(dbutils.fs.ls('dbfs:/tmp/open_image/validation')
 
 # COMMAND ----------
 
+# Change the dir since local dir in repos is non-writeable
+%cd /dbfs/tmp
+
+# COMMAND ----------
+
+from pathlib import Path
+
+detection_path = "/dbfs/yolo/detections"
+Path(detection_path).mkdir(exist_ok = True, parents = True)
+results.save(save_dir = detection_path)
+
+# COMMAND ----------
+
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
+import glob
 
-%cd /dbfs/tmp #need to load YOLO into dbfs, since it's not allowed to write into repo location
 model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
 
 # Images
-imgs = ['https://ultralytics.com/images/zidane.jpg']  # batch of images
+imgs = [
+  f"/{file.path}".replace(":", "/") 
+  for file in dbutils.fs.ls("/tmp/open_image/test")[:20]
+]
 
 # Inference
 results = model(imgs)
 
-# Display
-results.save(save_dir = "/dbfs/FileStore/yolo")
-img = Image.open("/dbfs/FileStore/yolo/zidane.jpg")
-im = np.asarray(img)
-plt.imshow(im)
-
 # COMMAND ----------
 
-dbutils.fs.ls("/tmp/open_image/train")[0]
-
-# COMMAND ----------
-
-# DBTITLE 1,Testing with Car Images
-# MAGIC %cd /dbfs/tmp
+# MAGIC %matplotlib inline
 # MAGIC 
-# MAGIC from PIL import Image
-# MAGIC import numpy as np
-# MAGIC import matplotlib.pyplot as plt
-# MAGIC import torch
+# MAGIC import glob
 # MAGIC 
-# MAGIC 
-# MAGIC model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
-# MAGIC 
-# MAGIC # Images
-# MAGIC imgs = ["/dbfs/tmp/open_image/train/0000048549557964_18233009494_029b52ca79_o.jpg"]
-# MAGIC 
-# MAGIC # Inference
-# MAGIC results = model(imgs)
+# MAGIC fig, ax = plt.subplots(20)
+# MAGIC plt.figure(figsize=(50, 100), dpi=80)
 # MAGIC 
 # MAGIC # Display
-# MAGIC results.save(save_dir = "/dbfs/FileStore/yolo_car")
-
-# COMMAND ----------
-
-dbutils.fs.ls("/tmp/open_image/train/")[100]
-
-# COMMAND ----------
-
-img_path = "/dbfs/tmp/open_image/train/001156eb13f37194_6409333165_ecceed029b_o.jpg"
-
-img = Image.open(img_path)
-im = np.asarray(img)
-plt.imshow(im)
-
-# COMMAND ----------
-
-
+# MAGIC 
+# MAGIC fig = plt.figure(figsize=(20, 100))
+# MAGIC columns = 1
+# MAGIC rows = 20
+# MAGIC 
+# MAGIC output_path = "/dbfs/yolo/detection3"
+# MAGIC img_path = glob.glob(f"{output_path}/*.jpg")
+# MAGIC results.save(save_dir = output_path)
+# MAGIC 
+# MAGIC for i in range(1, columns*rows+1):
+# MAGIC     img = Image.open(img_path[i-1])
+# MAGIC     im = np.asarray(img)
+# MAGIC     fig.add_subplot(rows, columns, i)
+# MAGIC     plt.imshow(im)

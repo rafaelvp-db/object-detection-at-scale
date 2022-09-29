@@ -1,4 +1,18 @@
 # Databricks notebook source
+# MAGIC %md
+# MAGIC 
+# MAGIC # Data Ingestion
+# MAGIC ## Google Open Image Datasets
+# MAGIC 
+# MAGIC <hr></hr>
+# MAGIC 
+# MAGIC * We will train a model to detect different types of automobiles in pictures.
+# MAGIC * To train our model, we will leverage Google's Open Image project datasets.
+# MAGIC * First step is to download CSV files for image **annotations**, as well as a list of image categories (e.g. Cat, Dog, Car, Ambulance etc).
+# MAGIC * Once we download these text files, we will then proceed to download the actual images that will be used for our training. Since we are talking about hundreds of thousands of images, we will leverage the power of Spark to download these images at scale.
+
+# COMMAND ----------
+
 # Download some metadata/annotation files
 !wget https://storage.googleapis.com/openimages/v5/class-descriptions-boxable.csv -O /dbfs/tmp/class-descriptions-boxable.csv
 !wget -O /dbfs/tmp/oid_bbox_trainable_label_map.pbtxt https://raw.githubusercontent.com/tensorflow/models/master/research/object_detection/data/oid_bbox_trainable_label_map.pbtxt
@@ -64,11 +78,11 @@ spark.read.csv("dbfs:/tmp/train-images-boxable-with-rotation.csv", header = True
 # MAGIC   union distinct select ImageID, OriginalURL, Subset from openimage.validation_image
 # MAGIC ) as i
 # MAGIC on a.ImageID = i.ImageID
-# MAGIC where c.name = "Car"
+# MAGIC where c.name in ('Ambulance', 'Bus', 'Car', 'Motorcycle', 'Truck')
 
 # COMMAND ----------
 
-_sqldf.write.saveAsTable("openimage.training_image_url")
+_sqldf.write.saveAsTable("openimage.training_image_url", mode = "overwrite")
 
 # COMMAND ----------
 
