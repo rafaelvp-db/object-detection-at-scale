@@ -23,11 +23,16 @@ from torchvision.models import resnet50
 import torchvision.transforms as T
 torch.set_grad_enabled(False);
 
-"""## DETR
-Here is a minimal implementation of DETR:
-"""
+# COMMAND ----------
 
-class DETRdemo(nn.Module):
+# MAGIC %md
+# MAGIC 
+# MAGIC ### DETR
+# MAGIC Here is a minimal implementation of DETR:
+
+# COMMAND ----------
+
+class DETR(nn.Module):
     """
     Demo DETR implementation.
 
@@ -107,29 +112,33 @@ class DETRdemo(nn.Module):
 # MAGIC * a convolutional backbone - we use ResNet-50 in this demo
 # MAGIC * a Transformer - we use the default PyTorch nn.Transformer
 # MAGIC 
-# MAGIC <img src=""/>
+# MAGIC <img src="https://raw.githubusercontent.com/rafaelvp-db/object-detection-at-scale/master/img/DETR.png"/>
 # MAGIC 
 # MAGIC Let's construct the model with 80 COCO output classes + 1 ⦰ "no object" class and load the pretrained weights.
 # MAGIC The weights are saved in half precision to save bandwidth without hurting model accuracy.
 
 # COMMAND ----------
 
-
-
-detr = DETRdemo(num_classes=91)
+detr = DETR(num_classes=91)
 state_dict = torch.hub.load_state_dict_from_url(
     url='https://dl.fbaipublicfiles.com/detr/detr_demo-da2a99e9.pth',
     map_location='cpu', check_hash=True)
 detr.load_state_dict(state_dict)
 detr.eval();
 
-"""## Computing predictions with DETR
+# COMMAND ----------
 
-The pre-trained DETR model that we have just loaded has been trained on the 80 COCO classes, with class indices ranging from 1 to 90 (that's why we considered 91 classes in the model construction).
-In the following cells, we define the mapping from class indices to names.
-"""
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Computing predictions with DETR
+# MAGIC 
+# MAGIC The pre-trained DETR model that we have just loaded has been trained on the 80 COCO classes, with class indices ranging from 1 to 90 (that's why we considered 91 classes in the model construction).
+# MAGIC In the following cells, we define the mapping from class indices to names.
+
+# COMMAND ----------
 
 # COCO classes
+
 CLASSES = [
     'N/A', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
     'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 'N/A',
@@ -151,7 +160,13 @@ CLASSES = [
 COLORS = [[0.000, 0.447, 0.741], [0.850, 0.325, 0.098], [0.929, 0.694, 0.125],
           [0.494, 0.184, 0.556], [0.466, 0.674, 0.188], [0.301, 0.745, 0.933]]
 
-"""DETR uses standard ImageNet normalization, and output boxes in relative image coordinates in $[x_{\text{center}}, y_{\text{center}}, w, h]$ format, where $[x_{\text{center}}, y_{\text{center}}]$ is the predicted center of the bounding box, and $w, h$ its width and height. Because the coordinates are relative to the image dimension and lies between $[0, 1]$, we convert predictions to absolute image coordinates and $[x_0, y_0, x_1, y_1]$ format for visualization purposes."""
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC DETR uses standard **ImageNet** normalization, and output boxes in relative image coordinates in *x_center, y_center, w, h* format, where *x_center, y_center* is the predicted center of the bounding box, and *w, h* its width and height. Because the coordinates are relative to the image dimension and lies between 0, 1, we convert predictions to absolute image coordinates and *x0, y0, x1, y1* format for visualization purposes.
+
+# COMMAND ----------
 
 # standard PyTorch mean-std input image normalization
 transform = T.Compose([
@@ -173,7 +188,13 @@ def rescale_bboxes(out_bbox, size):
     b = b * torch.tensor([img_w, img_h, img_w, img_h], dtype=torch.float32)
     return b
 
-"""Let's put everything together in a `detect` function:"""
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC Let's put everything together in a `detect` function:
+
+# COMMAND ----------
 
 def detect(im, model, transform):
     # mean-std normalize the input image (batch-size: 1)
@@ -195,16 +216,27 @@ def detect(im, model, transform):
     bboxes_scaled = rescale_bboxes(outputs['pred_boxes'][0, keep], im.size)
     return probas[keep], bboxes_scaled
 
-"""## Using DETR
-To try DETRdemo model on your own image just change the URL below.
-"""
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Using DETR
+# MAGIC To try DETRdemo model on your own image just change the URL below.
+
+# COMMAND ----------
 
 url = 'http://images.cocodataset.org/val2017/000000039769.jpg'
 im = Image.open(requests.get(url, stream=True).raw)
 
 scores, boxes = detect(im, detr, transform)
 
-"""Let's now visualize the model predictions"""
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC Let's now visualize the model predictions
+
+# COMMAND ----------
 
 def plot_results(pil_img, prob, boxes):
     plt.figure(figsize=(16,10))
@@ -221,7 +253,3 @@ def plot_results(pil_img, prob, boxes):
     plt.show()
     
 plot_results(im, scores, boxes)
-
-# COMMAND ----------
-
-
