@@ -91,8 +91,3 @@ results.save(save_dir = detection_path)
 # MAGIC   im = np.asarray(img)
 # MAGIC   fig.add_subplot(rows, columns, i)
 # MAGIC   plt.imshow(im)
-
-# COMMAND ----------
-
-# DBTITLE 1,TODO: Single-Node Fine Tuning
-
