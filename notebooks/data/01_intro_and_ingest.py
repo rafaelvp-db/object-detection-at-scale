@@ -178,8 +178,20 @@ df = spark.sql(
     "full_path", F.concat(F.lit(dbfs_path), F.col("file_name"))
   )
 
-df.count()
+# COMMAND ----------
+
+display(df)
 
 # COMMAND ----------
 
 df.write.saveAsTable("openimage.image_annotation")
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC select count(distinct ImageID) from openimage.image_annotation
+
+# COMMAND ----------
+
+
