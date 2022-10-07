@@ -101,7 +101,12 @@ spark.conf.set("spark.databricks.optimizer.adaptive.enabled", "true")
 spark.conf.set("spark.default.parallelism", "240")
 spark.conf.set("spark.sql.autoBroadcastJoinThreshold", "100485760")
 
-def download_image(subset, url, image_id):
+def download_image(
+  subset,
+  url,
+  image_id,
+  root_path = "/dbfs/tmp/open_image"
+):
   
   import wget
   import sys
@@ -109,7 +114,7 @@ def download_image(subset, url, image_id):
   from pathlib import Path
   from urllib.error import HTTPError
 
-  folder_path = f"/dbfs/tmp/open_image/{subset}"
+  folder_path = f"{root_path}/{subset}"
   file_name = f"{image_id}_{url.split('/')[-1]}"
   try:
     if not Path(f"{folder_path}/{file_name}").exists():
@@ -146,4 +151,35 @@ result_df = result_df \
 
 # COMMAND ----------
 
+# MAGIC %sql
+# MAGIC 
+# MAGIC select * from openimage.image_download
 
+# COMMAND ----------
+
+from pyspark.sql import functions as F
+
+dbfs_path = "/dbfs/tmp/open_image"
+
+df = spark.sql(
+  """
+    select t.ImageID, t.XMin, t.XMax, t.YMin, t.YMax, d.OriginalURL, d.Subset from openimage.image_download d
+      inner join (
+        select ImageID, XMin, XMax, YMin, YMax from openimage.train_annotation
+        union all select ImageID, XMin, XMax, YMin, YMax from openimage.test_annotation
+        union all select ImageID, XMin, XMax, YMin, YMax from openimage.validation_annotation
+      ) as t
+      on d.ImageID = t.ImageId
+  """) \
+  .withColumn(
+    "file_name", F.split(F.col("d.OriginalURL"), '/').getItem(4)
+  ) \
+  .withColumn(
+    "full_path", F.concat(F.lit(dbfs_path), F.col("file_name"))
+  )
+
+df.count()
+
+# COMMAND ----------
+
+df.write.saveAsTable("openimage.image_annotation")
