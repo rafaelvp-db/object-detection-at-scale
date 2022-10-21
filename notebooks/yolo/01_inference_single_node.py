@@ -6,15 +6,6 @@ logging.getLogger("py4j").setLevel(logging.ERROR)
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC 
-# MAGIC select count(1), Subset, result 
-# MAGIC from openimage.image_download
-# MAGIC group by result, Subset
-# MAGIC order by Subset, result
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC 
 # MAGIC ## YOLO: You Only Look Once
