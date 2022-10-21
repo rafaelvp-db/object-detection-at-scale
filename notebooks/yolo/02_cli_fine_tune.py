@@ -30,7 +30,41 @@ print(f"Setup complete. Using torch {torch.__version__} ({torch.cuda.get_device_
 # COMMAND ----------
 
 # MAGIC %cd /tmp/yolov5
-# MAGIC !python train.py --img 416 --batch 16 --epochs 1 --data {os.environ["DATASET_DIRECTORY"]}/Stanford_Car-10/data.yaml --weights yolov5s.pt --cache
+# MAGIC !python train.py --img 416 --batch 16 --epochs 1 --data /content/datasets/Stanford_Car-10/data.yaml --weights yolov5s.pt --cache
+
+# COMMAND ----------
+
+# Start tensorboard
+# Launch after you have started training
+# logs save in the folder "runs"
+%load_ext tensorboard
+%tensorboard --logdir runs
+
+# COMMAND ----------
+
+!python detect.py --weights runs/train/exp/weights/best.pt --img 416 --conf 0.1 --source /content/datasets/Stanford_Car-10/test/images
+
+# COMMAND ----------
+
+import itertools
+
+
+# COMMAND ----------
+
+#display inference on ALL test images
+
+from matplotlib import pyplot as plt
+import matplotlib.image as mpimg
+import glob
+import itertools
+
+fig, ax = plt.subplots(3, 3, figsize = (10,10))
+
+images = glob.glob('runs/detect/exp3/*.jpg')
+for count, axis in enumerate(itertools.product(*(range(3), range(3)))):
+  img = mpimg.imread(images[count])
+  ax[axis[0], axis[1]].imshow(img)
+  ax[axis[0], axis[1]].axis('off')
 
 # COMMAND ----------
 
