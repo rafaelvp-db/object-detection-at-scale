@@ -46,11 +46,6 @@ print(f"Setup complete. Using torch {torch.__version__} ({torch.cuda.get_device_
 
 # COMMAND ----------
 
-import itertools
-
-
-# COMMAND ----------
-
 #display inference on ALL test images
 
 from matplotlib import pyplot as plt
