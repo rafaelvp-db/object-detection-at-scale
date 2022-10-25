@@ -1,14 +1,15 @@
 # Databricks notebook source
-!pip install --upgrade pip && pip install icevision[all]
+#!pip install --upgrade pip && pip install icevision[all] icedata
 
 # COMMAND ----------
 
-!pip install icedata
-
-# COMMAND ----------
-
+import logging
 from icevision.all import *
 import icedata
+import torch
+
+logger = spark._jvm.org.apache.log4j
+logging.getLogger("py4j.java_gateway").setLevel(logging.ERROR)
 
 # COMMAND ----------
 
@@ -43,7 +44,7 @@ valid_ds = Dataset(valid_records, valid_tfms)
 # COMMAND ----------
 
 # Show an element of the train_ds with augmentation transformations applied
-samples = [train_ds[0] for _ in range(3)]
+samples = [train_ds[0] for _ in range(10)]
 show_samples(samples, ncols=3)
 
 # COMMAND ----------
@@ -87,7 +88,15 @@ light_model = LightModel(model, metrics=metrics)
 from pytorch_lightning import loggers as pl_loggers
 
 mlf_logger = pl_loggers.MLFlowLogger(experiment_name = "/Shared/icevision", save_dir = "/tmp/logs")
-trainer = pl.Trainer(max_epochs=5, accelerator="gpu", devices=1, logger = mlf_logger, default_root_dir = "/tmp/yolo")
+trainer = pl.Trainer(
+  max_epochs=10,
+  accelerator="gpu",
+  devices=4,
+  logger=mlf_logger,
+  default_root_dir = "/tmp/yolo",
+  strategy = "horovod"
+)
+
 trainer.fit(light_model, train_dl, valid_dl)
 
 # COMMAND ----------
