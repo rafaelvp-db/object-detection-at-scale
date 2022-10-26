@@ -1,15 +1,10 @@
 # Databricks notebook source
-#!pip install --upgrade pip && pip install icevision[all] icedata
-
-# COMMAND ----------
-
 import logging
-from icevision.all import *
-import icedata
-import torch
-
 logger = spark._jvm.org.apache.log4j
 logging.getLogger("py4j.java_gateway").setLevel(logging.ERROR)
+
+from icevision.all import *
+import icedata
 
 # COMMAND ----------
 
@@ -22,7 +17,10 @@ data_dir = icedata.load_data(url, dest_dir)
 
 # Parse annotations to create records
 # Create the parser
-parser = parsers.VOCBBoxParser(annotations_dir=data_dir / "odFridgeObjects/annotations", images_dir=data_dir / "odFridgeObjects/images")
+parser = parsers.VOCBBoxParser(
+  annotations_dir=data_dir / "odFridgeObjects/annotations",
+  images_dir=data_dir / "odFridgeObjects/images"
+)
 
 train_records, valid_records = parser.parse()
 parser.class_map
@@ -63,13 +61,13 @@ model = model_type.model(backbone=backbone(pretrained=True), num_classes=len(par
 # COMMAND ----------
 
 # Data Loaders
-train_dl = model_type.train_dl(train_ds, batch_size=8, num_workers=4, shuffle=True)
-valid_dl = model_type.valid_dl(valid_ds, batch_size=8, num_workers=4, shuffle=False)
+train_dl = model_type.train_dl(train_ds, batch_size=32, num_workers=4, shuffle=True, pin_memory = True)
+valid_dl = model_type.valid_dl(valid_ds, batch_size=32, num_workers=4, shuffle=False, pin_memory = True)
 
 # COMMAND ----------
 
 # show batch
-model_type.show_batch(first(valid_dl), ncols=4)
+model_type.show_batch(first(valid_dl)[:20], ncols=3)
 
 # COMMAND ----------
 
@@ -86,18 +84,25 @@ light_model = LightModel(model, metrics=metrics)
 # COMMAND ----------
 
 from pytorch_lightning import loggers as pl_loggers
+import mlflow
 
-mlf_logger = pl_loggers.MLFlowLogger(experiment_name = "/Shared/icevision", save_dir = "/tmp/logs")
-trainer = pl.Trainer(
-  max_epochs=10,
-  accelerator="gpu",
-  devices=4,
-  logger=mlf_logger,
-  default_root_dir = "/tmp/yolo",
-  strategy = "horovod"
+mlflow.autolog()
+
+mlf_logger = pl_loggers.MLFlowLogger(
+  experiment_name = "/Shared/icevision",
+  save_dir = "/tmp/logs"
 )
 
-trainer.fit(light_model, train_dl, valid_dl)
+trainer = pl.Trainer(
+  max_epochs=50,
+  accelerator = "gpu",
+  devices=1,
+  logger=mlf_logger,
+  default_root_dir = "/tmp/yolo",
+)
+
+with mlflow.start_run(run_name = "icevision_ddp") as run:
+  trainer.fit(light_model, train_dl, valid_dl)
 
 # COMMAND ----------
 
@@ -107,3 +112,7 @@ preds = model_type.predict_from_dl(model, infer_dl, keep_images=True)
 # COMMAND ----------
 
 show_preds(preds=preds[:4])
+
+# COMMAND ----------
+
+
