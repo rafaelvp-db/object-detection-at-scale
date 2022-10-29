@@ -1,10 +1,6 @@
-torch
-torchvision
-opencv-python
-pandas
-requests
-pillow
-pyaml
-tqdm
-matplotlib
-seaborn
+icevision[all]
+icedata
+sahi==0.10.8
+horovod[pytorch]
+mlflow
+pytest
