@@ -15,10 +15,7 @@ class FridgeDataModule(pl.LightningDataModule):
         img_size: int = 384,
         batch_size: int = 8
     ):
-<<<<<<< HEAD
-=======
         super().__init__()
->>>>>>> c0b184a (init)
         self.url = url
         self.dest_dir = dest_dir
         self.batch_size = batch_size
