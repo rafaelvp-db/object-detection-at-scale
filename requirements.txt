@@ -1,3 +1,5 @@
+setuptools
+wheel
 icevision[all]
 icedata
 sahi==0.10.8
