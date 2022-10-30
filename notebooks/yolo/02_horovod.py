@@ -112,3 +112,7 @@ preds = model_type.predict_from_dl(model, infer_dl, keep_images=True)
 # COMMAND ----------
 
 show_preds(preds=preds[:4])
+
+# COMMAND ----------
+
+
