@@ -55,16 +55,3 @@ class FridgeDataModule(pl.LightningDataModule):
 
     def predict_dataloader(self):
         return DataLoader(self.test_ds, batch_size=self.batch_size)
-
-
-    def train_dataloader(self):
-        return DataLoader(self.train_ds, batch_size=self.batch_size)
-
-    def val_dataloader(self):
-        return DataLoader(self.valid_ds, batch_size=self.batch_size)
-
-    def test_dataloader(self):
-        return DataLoader(self.test_ds, batch_size=self.batch_size)
-
-    def predict_dataloader(self)
-        return DataLoader(self.test_ds, batch_size=self.batch_size)

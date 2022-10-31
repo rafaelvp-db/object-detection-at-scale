@@ -3,6 +3,8 @@ wheel
 icevision[all]
 icedata
 sahi==0.10.8
-horovod[pytorch]
+horovod[pytorch, spark]
 mlflow
 pytest
+pyspark==3.2.1
+sparkdl

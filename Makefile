@@ -5,3 +5,6 @@ clean:
 	rm -rf models/__pycache__ && \
 	rm -rf *.egg-info && \
 	rm -rf mlruns
+
+unit: clean
+	pytest test --log-cli-level=INFO
