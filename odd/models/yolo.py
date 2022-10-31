@@ -21,7 +21,9 @@ class LitYOLOV5(model_type.lightning.ModelAdapter):
         )
 
         super().__init__(model, metrics)
+        self.model = model
         self.learning_rate = learning_rate
 
     def configure_optimizers(self):
-        return Adam(self.parameters(), lr = self.learning_rate)
+        self.optimizer = Adam(self.parameters(), lr = self.learning_rate)
+        return self.optimizer

@@ -1,7 +1,7 @@
 import icedata
 from icevision.all import parsers, tfms, Dataset
 import pytorch_lightning as pl
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, DistributedSampler
 from typing import Optional
 
 FRIDGE_IMAGE_URL = "https://cvbp-secondary.z19.web.core.windows.net/datasets/object_detection/odFridgeObjects.zip"
@@ -54,4 +54,17 @@ class FridgeDataModule(pl.LightningDataModule):
         return DataLoader(self.test_ds, batch_size=self.batch_size)
 
     def predict_dataloader(self):
+        return DataLoader(self.test_ds, batch_size=self.batch_size)
+
+
+    def train_dataloader(self):
+        return DataLoader(self.train_ds, batch_size=self.batch_size)
+
+    def val_dataloader(self):
+        return DataLoader(self.valid_ds, batch_size=self.batch_size)
+
+    def test_dataloader(self):
+        return DataLoader(self.test_ds, batch_size=self.batch_size)
+
+    def predict_dataloader(self)
         return DataLoader(self.test_ds, batch_size=self.batch_size)
