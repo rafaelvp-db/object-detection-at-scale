@@ -7,4 +7,8 @@ clean:
 	rm -rf mlruns
 
 unit: clean
+	source .venv/bin/activate && \
 	pytest test --log-cli-level=INFO
+
+horovod: clean
+	pytest test/test_horovod.py --log-cli-level=INFO
