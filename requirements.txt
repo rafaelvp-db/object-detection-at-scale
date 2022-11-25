@@ -1,10 +1,13 @@
 torch
 torchvision
-opencv-python
 pandas
 requests
-pillow
 pyaml
 tqdm
 matplotlib
 seaborn
+pillow
+opencv-python
+sahi==0.10.8
+pytorch-lightning==1.8.0.post1
+icevision[all]
