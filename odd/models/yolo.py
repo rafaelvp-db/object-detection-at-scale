@@ -30,14 +30,4 @@ class LitObjectDetectionModel(model_type.lightning.ModelAdapter):
     def configure_optimizers(self):
 
         optimizer = Adam(self.parameters(), lr = self.learning_rate)
-        if not self.distributed:
-            self.optimizer = optimizer
-            return optimizer
-
-        dist_optimizer = hvd.DistributedOptimizer(
-            optimizer,
-            named_parameters = self.model.named_parameters()
-        )
-
-        self.optimizer = dist_optimizer
-        return dist_optimizer
+        return optimizer

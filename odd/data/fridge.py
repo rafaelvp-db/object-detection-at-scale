@@ -43,12 +43,14 @@ class FridgeDataModule(pl.LightningDataModule):
         self.train_ds = Dataset(train_records, self.train_tfms)
         self.valid_ds = Dataset(valid_records, self.valid_tfms)
         self.test_ds = Dataset(valid_records, self.valid_tfms)
+        self.sampler = DistributedSampler(self.train_ds)
 
     def train_dataloader(self):
-        return DataLoader(self.train_ds, batch_size=self.batch_size)
+        
+        return DataLoader(self.train_ds, sampler = self.sampler, batch_size=self.batch_size)
 
     def val_dataloader(self):
-        return DataLoader(self.valid_ds, batch_size=self.batch_size)
+        return DataLoader(self.valid_ds, sampler = self.sampler, batch_size=self.batch_size)
 
     def test_dataloader(self):
         return DataLoader(self.test_ds, batch_size=self.batch_size)

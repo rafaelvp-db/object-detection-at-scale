@@ -12,3 +12,6 @@ unit: clean
 
 horovod: clean
 	pytest test/test_horovod.py --log-cli-level=INFO
+
+train: clean
+	pytest test/test_train.py --log-cli-level=INFO
